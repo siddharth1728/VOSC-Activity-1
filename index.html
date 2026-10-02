@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe | VOSC Activity 1</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <h1>Tic-Tac-Toe</h1>
+      <p class="subtitle">VOSC Activity - 1</p>
+    </header>
+
+    <div class="status-panel">
+      <div id="status" class="status-text">Player <span class="player-turn x-turn">X</span>'s Turn</div>
+    </div>
+
+    <main class="board" id="board">
+      <button class="cell" data-cell-index="0" aria-label="Cell 1"></button>
+      <button class="cell" data-cell-index="1" aria-label="Cell 2"></button>
+      <button class="cell" data-cell-index="2" aria-label="Cell 3"></button>
+      <button class="cell" data-cell-index="3" aria-label="Cell 4"></button>
+      <button class="cell" data-cell-index="4" aria-label="Cell 5"></button>
+      <button class="cell" data-cell-index="5" aria-label="Cell 6"></button>
+      <button class="cell" data-cell-index="6" aria-label="Cell 7"></button>
+      <button class="cell" data-cell-index="7" aria-label="Cell 8"></button>
+      <button class="cell" data-cell-index="8" aria-label="Cell 9"></button>
+    </main>
+
+    <div class="actions">
+      <button id="restartBtn" class="btn-restart">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        Restart Game
+      </button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
