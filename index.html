@@ -1,45 +1,508 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic-Tac-Toe | VOSC Activity 1</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tic-Tac-Toe // Intelligence — A high-performance, tactical browser game engineered with Minimax AI, deterministic post-match game review, tactical scoring, and procedural audio.">
+    <title>TIC-TAC-TOE // INTELLIGENCE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div class="game-container">
-    <header class="game-header">
-      <h1>Tic-Tac-Toe</h1>
-      <p class="subtitle">VOSC Activity - 1</p>
-    </header>
+    <!-- Live Region for Screen Readers -->
+    <div id="srAnnouncer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-    <div class="status-panel">
-      <div id="status" class="status-text">Player <span class="player-turn x-turn">X</span>'s Turn</div>
+    <div class="app-wrapper">
+        <!-- Top Navigation Bar -->
+        <header class="app-header">
+            <div class="brand-group">
+                <div class="brand-badge">SYSTEM V2.0</div>
+                <h1 class="brand-title">TIC-TAC-TOE <span class="brand-highlight">// INTELLIGENCE</span></h1>
+            </div>
+            
+            <div class="header-actions">
+                <button id="soundToggleBtn" class="icon-btn" aria-label="Toggle sound effects" title="Toggle Sound (M)">
+                    <span class="icon" id="soundIcon">🔊</span>
+                    <span class="btn-text">Audio</span>
+                </button>
+                <button id="statsModalBtn" class="icon-btn" aria-label="View player statistics" title="Stats & History (S)">
+                    <span class="icon">📊</span>
+                    <span class="btn-text">Analytics</span>
+                </button>
+                <button id="helpModalBtn" class="icon-btn" aria-label="Game instructions and keyboard shortcuts" title="Keyboard Shortcuts & Info (?)">
+                    <span class="icon">⌨️</span>
+                    <span class="btn-text">Manual</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="game-layout">
+            <!-- Left Panel: Tactical Configuration & Match Info -->
+            <aside class="panel config-panel">
+                <div class="panel-header">
+                    <span class="panel-tag">MODE_SELECT</span>
+                    <h2 class="panel-title">Game Configuration</h2>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" id="modeGroupLabel">Operational Mode</label>
+                    <div class="segmented-control" role="radiogroup" aria-labelledby="modeGroupLabel">
+                        <button type="button" class="segment-btn active" data-mode="ai" role="radio" aria-checked="true" id="modeAiBtn">
+                            <span class="segment-icon">🤖</span>
+                            <span>VS AI</span>
+                        </button>
+                        <button type="button" class="segment-btn" data-mode="pvp" role="radio" aria-checked="false" id="modePvpBtn">
+                            <span class="segment-icon">👥</span>
+                            <span>Pass & Play</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group" id="difficultyControlGroup">
+                    <label class="control-label" id="diffGroupLabel">AI Neural Depth</label>
+                    <div class="segmented-control pill-control" role="radiogroup" aria-labelledby="diffGroupLabel">
+                        <button type="button" class="segment-btn" data-difficulty="easy" role="radio" aria-checked="false">
+                            <span>Easy</span>
+                        </button>
+                        <button type="button" class="segment-btn" data-difficulty="medium" role="radio" aria-checked="false">
+                            <span>Medium</span>
+                        </button>
+                        <button type="button" class="segment-btn active" data-difficulty="hard" role="radio" aria-checked="true">
+                            <span>Hard (Minimax)</span>
+                        </button>
+                    </div>
+                    <p class="control-hint" id="difficultyHint">Unbeatable optimal decision tree with depth evaluation.</p>
+                </div>
+
+                <div class="control-group" id="playerSideControlGroup">
+                    <label class="control-label" id="sideGroupLabel">Player Symbol</label>
+                    <div class="segmented-control" role="radiogroup" aria-labelledby="sideGroupLabel">
+                        <button type="button" class="segment-btn active" data-side="X" role="radio" aria-checked="true">
+                            <span class="symbol-badge x-badge">X</span> First Move
+                        </button>
+                        <button type="button" class="segment-btn" data-side="O" role="radio" aria-checked="false">
+                            <span class="symbol-badge o-badge">O</span> Second Move
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Session Quick Stats -->
+                <div class="session-card">
+                    <div class="session-card-header">
+                        <span class="session-label">SESSION SCOREBOARD</span>
+                        <button id="quickResetStatsBtn" class="text-link-btn" title="Reset current session score">Reset</button>
+                    </div>
+                    <div class="session-metrics">
+                        <div class="metric-box">
+                            <span class="metric-val x-color" id="scoreX">0</span>
+                            <span class="metric-key">PLAYER X</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-val draws-color" id="scoreDraws">0</span>
+                            <span class="metric-key">DRAWS</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-val o-color" id="scoreO">0</span>
+                            <span class="metric-key" id="scoreOLabel">AI (O)</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center Stage: The Tactical Board -->
+            <section class="panel board-stage" aria-label="Tic-Tac-Toe Game Board">
+                <!-- Status Banner -->
+                <div class="status-banner" id="statusBanner" role="status">
+                    <div class="status-indicator-dot" id="statusDot"></div>
+                    <div class="status-text-wrap">
+                        <span class="status-primary" id="statusPrimary">Player X's Turn</span>
+                        <span class="status-secondary" id="statusSecondary">Select any unoccupied grid coordinate</span>
+                    </div>
+                </div>
+
+                <!-- AI Cognition Telemetry Readout -->
+                <div class="ai-telemetry" id="aiTelemetry" aria-hidden="true">
+                    <div class="telemetry-header">
+                        <span class="pulse-dot"></span>
+                        <span class="telemetry-title">AI COGNITION STREAM</span>
+                    </div>
+                    <div class="telemetry-body" id="telemetryBody">
+                        <span class="telemetry-item">Candidates: <strong id="telemetryCandidates">--</strong></span>
+                        <span class="telemetry-divider">|</span>
+                        <span class="telemetry-item">Threat: <strong id="telemetryThreat">None</strong></span>
+                        <span class="telemetry-divider">|</span>
+                        <span class="telemetry-item">Evaluation: <strong id="telemetryEval">0.00</strong></span>
+                    </div>
+                    <p class="telemetry-rationale" id="telemetryRationale">Awaiting tactical move input...</p>
+                </div>
+
+                <!-- 3x3 Grid Board -->
+                <div class="board-wrapper">
+                    <div class="board" id="board" role="grid" aria-label="3 by 3 Tic-Tac-Toe Grid" tabindex="0">
+                        <div class="board-row" role="row">
+                            <button class="cell" data-index="0" role="gridcell" aria-label="Row 1, Column 1, Empty" tabindex="0">
+                                <span class="cell-mark"></span>
+                                <span class="cell-coord">R1·C1</span>
+                            </button>
+                            <button class="cell" data-index="1" role="gridcell" aria-label="Row 1, Column 2, Empty" tabindex="-1">
+                                <span class="cell-mark"></span>
+                                <span class="cell-coord">R1·C2</span>
+                            </button>
+                            <button class="cell" data-index="2" role="gridcell" aria-label="Row 1, Column 3, Empty" tabindex="-1">
+                                <span class="cell-mark"></span>
+                                <span class="cell-coord">R1·C3</span>
+                            </button>
+                        </div>
+                        <div class="board-row" role="row">
+                            <button class="cell" data-index="3" role="gridcell" aria-label="Row 2, Column 1, Empty" tabindex="-1">
+                                <span class="cell-mark"></span>
+                                <span class="cell-coord">R2·C1</span>
+                            </button>
+                            <button class="cell" data-index="4" role="gridcell" aria-label="Row 2, Column 2, Empty" tabindex="-1">
+                                <span class="cell-mark"></span>
+                                <span class="cell-coord">R2·C2</span>
+                            </button>
+                            <button class="cell" data-index="5" role="gridcell" aria-label="Row 2, Column 3, Empty" tabindex="-1">
+                                <span class="cell-mark"></span>
+                                <span class="cell-coord">R2·C3</span>
+                            </button>
+                        </div>
+                        <div class="board-row" role="row">
+                            <button class="cell" data-index="6" role="gridcell" aria-label="Row 3, Column 1, Empty" tabindex="-1">
+                                <span class="cell-mark"></span>
+                                <span class="cell-coord">R3·C1</span>
+                            </button>
+                            <button class="cell" data-index="7" role="gridcell" aria-label="Row 3, Column 2, Empty" tabindex="-1">
+                                <span class="cell-mark"></span>
+                                <span class="cell-coord">R3·C2</span>
+                            </button>
+                            <button class="cell" data-index="8" role="gridcell" aria-label="Row 3, Column 3, Empty" tabindex="-1">
+                                <span class="cell-mark"></span>
+                                <span class="cell-coord">R3·C3</span>
+                            </button>
+                        </div>
+
+                        <!-- Strike Line Overlay for Winning Vector -->
+                        <div class="strike-line" id="strikeLine" aria-hidden="true"></div>
+                    </div>
+                </div>
+
+                <!-- Primary Board Controls -->
+                <div class="board-controls">
+                    <button id="undoBtn" class="action-btn secondary" disabled title="Undo last move (U)">
+                        <span class="btn-icon">↩️</span>
+                        <span>Undo</span>
+                    </button>
+                    <button id="resetBtn" class="action-btn primary" title="Restart match (R)">
+                        <span class="btn-icon">🔄</span>
+                        <span>Restart Match</span>
+                    </button>
+                    <button id="reviewBtn" class="action-btn accent" style="display: none;" title="Open match review">
+                        <span class="btn-icon">🔍</span>
+                        <span>Game Review</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Live Move Timeline & Analysis Preview -->
+            <aside class="panel timeline-panel">
+                <div class="panel-header">
+                    <span class="panel-tag">TIMELINE</span>
+                    <h2 class="panel-title">Move History</h2>
+                </div>
+
+                <div class="timeline-container" id="timelineContainer" tabindex="0" aria-label="Match Move History List">
+                    <div class="timeline-empty" id="timelineEmpty">
+                        <div class="empty-icon">⏱️</div>
+                        <p>No moves registered yet.</p>
+                        <span>Select a cell on the grid to begin match logging.</span>
+                    </div>
+                    <ol class="timeline-list" id="timelineList" aria-live="polite"></ol>
+                </div>
+
+                <!-- Match Live Diagnostics -->
+                <div class="diagnostics-card">
+                    <div class="diag-item">
+                        <span class="diag-label">Match Clock</span>
+                        <span class="diag-val" id="matchTimer">00:00</span>
+                    </div>
+                    <div class="diag-item">
+                        <span class="diag-label">Moves Played</span>
+                        <span class="diag-val" id="totalMovesCount">0 / 9</span>
+                    </div>
+                    <div class="diag-item">
+                        <span class="diag-label">First Advantage</span>
+                        <span class="diag-val" id="firstAdvantageVal">Player X (+1)</span>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>TIC-TAC-TOE // INTELLIGENCE &bull; VOSC Activity-1 &bull; Fully Local Deterministic Game Engine & Minimax Core</p>
+        </footer>
     </div>
 
-    <main class="board" id="board">
-      <button class="cell" data-cell-index="0" aria-label="Cell 1"></button>
-      <button class="cell" data-cell-index="1" aria-label="Cell 2"></button>
-      <button class="cell" data-cell-index="2" aria-label="Cell 3"></button>
-      <button class="cell" data-cell-index="3" aria-label="Cell 4"></button>
-      <button class="cell" data-cell-index="4" aria-label="Cell 5"></button>
-      <button class="cell" data-cell-index="5" aria-label="Cell 6"></button>
-      <button class="cell" data-cell-index="6" aria-label="Cell 7"></button>
-      <button class="cell" data-cell-index="7" aria-label="Cell 8"></button>
-      <button class="cell" data-cell-index="8" aria-label="Cell 9"></button>
-    </main>
+    <!-- ==================================================== -->
+    <!-- MODAL 1: SIGNATURE FEATURE — POST-MATCH GAME REVIEW -->
+    <!-- ==================================================== -->
+    <div class="modal-backdrop" id="reviewModal" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle" hidden>
+        <div class="modal-card review-modal-card">
+            <div class="modal-header">
+                <div class="modal-header-badge">POST-MATCH INTELLIGENCE REPORT</div>
+                <h2 class="modal-title" id="reviewModalTitle">Match Tactical Analysis</h2>
+                <button class="modal-close-btn" id="closeReviewModalBtn" aria-label="Close match review">&times;</button>
+            </div>
 
-    <div class="actions">
-      <button id="restartBtn" class="btn-restart">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-        Restart Game
-      </button>
+            <div class="modal-body review-modal-body">
+                <!-- Result Headline Banner -->
+                <div class="review-result-banner" id="reviewResultBanner">
+                    <div class="result-badge" id="reviewResultBadge">VICTORY</div>
+                    <h3 class="result-headline" id="reviewResultHeadline">Player X achieved strategic win in 7 moves</h3>
+                    <p class="result-subtext" id="reviewResultSubtext">Match completed in 18.4 seconds with 85% tactical efficiency.</p>
+                </div>
+
+                <!-- Tactical Key Performance Metrics Grid -->
+                <div class="review-metrics-grid">
+                    <div class="review-metric-card score-card">
+                        <div class="metric-ring-wrap">
+                            <svg class="score-ring-svg" viewBox="0 0 100 100">
+                                <circle class="score-ring-bg" cx="50" cy="50" r="42" />
+                                <circle class="score-ring-progress" id="scoreRingProgress" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="66" />
+                            </svg>
+                            <span class="metric-ring-number" id="tacticalScoreVal">88</span>
+                        </div>
+                        <span class="review-metric-name">TACTICAL SCORE</span>
+                        <span class="review-metric-desc" id="tacticalScoreGrade">Master Class Execution</span>
+                    </div>
+
+                    <div class="review-metric-card">
+                        <span class="metric-huge" id="revTotalMoves">7</span>
+                        <span class="review-metric-name">TOTAL MOVES</span>
+                        <span class="review-metric-desc" id="revMoveEfficiency">Peak Efficiency</span>
+                    </div>
+
+                    <div class="review-metric-card">
+                        <span class="metric-huge" id="revThreatsBlocked">2</span>
+                        <span class="review-metric-name">THREATS BLOCKED</span>
+                        <span class="review-metric-desc">Defensive Counter-Plays</span>
+                    </div>
+
+                    <div class="review-metric-card">
+                        <span class="metric-huge" id="revMissedWins">0</span>
+                        <span class="review-metric-name">MISSED OPPORTUNITIES</span>
+                        <span class="review-metric-desc" id="revMissedDesc">Clean Decision Path</span>
+                    </div>
+                </div>
+
+                <!-- Deterministic Narrative Explanation: "WHAT HAPPENED?" -->
+                <div class="review-narrative-section">
+                    <h4 class="section-subtitle">
+                        <span class="icon">🧠</span> TACTICAL SEQUENCE BREAKDOWN ("WHAT HAPPENED?")
+                    </h4>
+                    <div class="narrative-box" id="reviewNarrativeBox">
+                        <!-- Populated deterministically by GameAnalyzer -->
+                    </div>
+                </div>
+
+                <!-- Interactive Move Stepper / Inspector -->
+                <div class="review-stepper-section">
+                    <h4 class="section-subtitle">
+                        <span class="icon">🔍</span> INTERACTIVE MOVE INSPECTOR
+                    </h4>
+                    <div class="stepper-layout">
+                        <!-- Mini Preview Board -->
+                        <div class="mini-board" id="miniBoard" aria-label="Historic Board State Preview">
+                            <div class="mini-cell" data-idx="0"></div>
+                            <div class="mini-cell" data-idx="1"></div>
+                            <div class="mini-cell" data-idx="2"></div>
+                            <div class="mini-cell" data-idx="3"></div>
+                            <div class="mini-cell" data-idx="4"></div>
+                            <div class="mini-cell" data-idx="5"></div>
+                            <div class="mini-cell" data-idx="6"></div>
+                            <div class="mini-cell" data-idx="7"></div>
+                            <div class="mini-cell" data-idx="8"></div>
+                        </div>
+
+                        <!-- Step Details Panel -->
+                        <div class="step-detail-card">
+                            <div class="step-nav-bar">
+                                <button id="stepPrevBtn" class="icon-btn small-btn" aria-label="Previous move">◀ Prev</button>
+                                <span class="step-counter" id="stepCounter">Move 1 of 7</span>
+                                <button id="stepNextBtn" class="icon-btn small-btn" aria-label="Next move">Next ▶</button>
+                            </div>
+                            <div class="step-info" id="stepInfo">
+                                <div class="step-badge" id="stepBadge">Move 1 &bull; Player X</div>
+                                <h5 class="step-title" id="stepTitle">Center Grid Acquisition</h5>
+                                <p class="step-explanation" id="stepExplanation">Player X placed mark at Center (R2·C2), seizing primary board control.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="action-btn secondary" id="reviewCloseActionBtn">Close Report</button>
+                <button class="action-btn primary" id="reviewPlayAgainBtn">Play Next Match</button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script src="script.js"></script>
+    <!-- ==================================================== -->
+    <!-- MODAL 2: LIFETIME STATISTICS & RECENT MATCH HISTORY -->
+    <!-- ==================================================== -->
+    <div class="modal-backdrop" id="statsModal" role="dialog" aria-modal="true" aria-labelledby="statsModalTitle" hidden>
+        <div class="modal-card stats-modal-card">
+            <div class="modal-header">
+                <div class="modal-header-badge">PERSISTENT TELEMETRY</div>
+                <h2 class="modal-title" id="statsModalTitle">Lifetime Statistics & Match Logs</h2>
+                <button class="modal-close-btn" id="closeStatsModalBtn" aria-label="Close statistics">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Lifetime Stats Grid -->
+                <div class="lifetime-stats-grid">
+                    <div class="lifetime-stat-box">
+                        <span class="lt-val" id="ltGamesPlayed">0</span>
+                        <span class="lt-label">GAMES PLAYED</span>
+                    </div>
+                    <div class="lifetime-stat-box">
+                        <span class="lt-val lt-win" id="ltWinRate">0%</span>
+                        <span class="lt-label">WIN RATE</span>
+                    </div>
+                    <div class="lifetime-stat-box">
+                        <span class="lt-val" id="ltWinsLosses">0W - 0L - 0D</span>
+                        <span class="lt-label">RECORD (W-L-D)</span>
+                    </div>
+                    <div class="lifetime-stat-box">
+                        <span class="lt-val" id="ltCurrentStreak">0</span>
+                        <span class="lt-label">CURRENT STREAK</span>
+                    </div>
+                    <div class="lifetime-stat-box">
+                        <span class="lt-val" id="ltBestStreak">0</span>
+                        <span class="lt-label">BEST WIN STREAK</span>
+                    </div>
+                    <div class="lifetime-stat-box">
+                        <span class="lt-val" id="ltAvgMoves">0.0</span>
+                        <span class="lt-label">AVG MOVES / MATCH</span>
+                    </div>
+                </div>
+
+                <!-- Recent Matches Log -->
+                <div class="recent-matches-section">
+                    <div class="section-header-flex">
+                        <h4 class="section-subtitle">
+                            <span class="icon">📜</span> RECENT MATCH LOGS (LAST 10)
+                        </h4>
+                        <button class="text-danger-btn" id="clearAllStatsBtn">Clear All Statistics</button>
+                    </div>
+                    <div class="match-history-table-wrap">
+                        <table class="match-history-table">
+                            <thead>
+                                <tr>
+                                    <th>MATCH</th>
+                                    <th>MODE</th>
+                                    <th>RESULT</th>
+                                    <th>MOVES</th>
+                                    <th>DURATION</th>
+                                    <th>TACTICAL SCORE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matchHistoryTableBody">
+                                <tr>
+                                    <td colspan="6" class="table-empty">No historical match logs recorded yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="action-btn primary" id="statsModalOkBtn">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================== -->
+    <!-- MODAL 3: KEYBOARD SHORTCUTS & USER MANUAL            -->
+    <!-- ==================================================== -->
+    <div class="modal-backdrop" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle" hidden>
+        <div class="modal-card help-modal-card">
+            <div class="modal-header">
+                <div class="modal-header-badge">SYSTEM MANUAL</div>
+                <h2 class="modal-title" id="helpModalTitle">Keyboard Controls & Intelligence Guide</h2>
+                <button class="modal-close-btn" id="closeHelpModalBtn" aria-label="Close guide">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="help-section">
+                    <h4 class="section-subtitle">⌨️ KEYBOARD SHORTCUTS</h4>
+                    <div class="shortcuts-grid">
+                        <div class="shortcut-row">
+                            <kbd class="key">Arrow Keys</kbd>
+                            <span>Navigate 3x3 Grid Cells</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <kbd class="key">Enter</kbd> / <kbd class="key">Space</kbd>
+                            <span>Place Mark in Focused Cell</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <kbd class="key">U</kbd>
+                            <span>Undo Last Tactical Move</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <kbd class="key">R</kbd>
+                            <span>Restart / New Match</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <kbd class="key">M</kbd>
+                            <span>Toggle Procedural Audio FX</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <kbd class="key">S</kbd>
+                            <span>Open Analytics & Match History</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <kbd class="key">Esc</kbd>
+                            <span>Dismiss Open Modals / Reviews</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h4 class="section-subtitle">🤖 AI ARCHITECTURE MODES</h4>
+                    <div class="ai-guide-grid">
+                        <div class="ai-guide-item">
+                            <div class="ai-guide-badge easy">EASY</div>
+                            <p>Probabilistic heuristic model with strategic variance and random exploration.</p>
+                        </div>
+                        <div class="ai-guide-item">
+                            <div class="ai-guide-badge medium">MEDIUM</div>
+                            <p>Tactical lookahead: immediately claims win vectors and blocks immediate player threats.</p>
+                        </div>
+                        <div class="ai-guide-item">
+                            <div class="ai-guide-badge hard">HARD</div>
+                            <p>Minimax decision engine with game tree search. Provably optimal and unbeatable.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="action-btn primary" id="helpModalOkBtn">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Script -->
+    <script src="script.js"></script>
 </body>
+
 </html>
